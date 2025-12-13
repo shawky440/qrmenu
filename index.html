@@ -4,178 +4,319 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>منيو المطعم</title>
+
 <style>
-/* نفس التنسيقات السابقة */
-body { margin:0; font-family:Tahoma; background:#f5f5f5; color:#222; }
-header { background:#d62828; color:#fff; text-align:center; padding:20px; font-size:28px; cursor:pointer; }
-.categories-bar { display:flex; overflow-x:auto; gap:15px; padding:10px; background:#fff8f0; }
-.category { background:#d62828; color:white; padding:10px 20px; border-radius:10px; cursor:pointer; white-space:nowrap; }
-.category:hover { background:#ff6f3c; }
-.items { text-align: center; display:flex; flex-wrap: wrap; gap:20px; margin:20px; justify-content:center; }
-.item {text-align:center; background:#fff; border-radius:12px; overflow:hidden; box-shadow:0 4px 10px rgba(0,0,0,0.1); width:150px; cursor:pointer; transition:0.25s;}
-.item:hover { transform:scale(1.03); }
-.item img { width:100%; height:140px; object-fit:cover; }
-.info { padding:10px; font-weight:bold; text-align:center; }
-.details-popup { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); justify-content:center; align-items:center; }
-.details-content { background:#fff; padding:20px; border-radius:12px; max-width:400px; width:90%; max-height:80%; overflow-y:auto; }
-.unit-item { margin:10px 0; padding:10px; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,.2); }
-.unit-item img { width:100%; height:90px; object-fit:cover; border-radius:8px; }
-#okBtn { width:100%; background:#d62828; color:#fff; padding:12px; border:none; border-radius:10px; font-size:18px; margin-top:15px; }
-.footer { background:#222; color:#fff; text-align:center; padding:10px; position:fixed; bottom:0; width:100%; }
+body { margin:0; font-family:Tahoma; background:#f5f5f5; }
+header {
+    background:#d62828;
+    color:#fff;
+    text-align:center;
+    padding:18px;
+    font-size:26px;
+    cursor:pointer;
+}
+
+.categories-bar {
+    display:flex;
+    gap:12px;
+    padding:10px;
+    background:#fff;
+    overflow-x:auto;
+}
+
+.category {
+    background:#d62828;
+    color:#fff;
+    padding:10px 18px;
+    border-radius:10px;
+    cursor:pointer;
+}
+
+.items {
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:center;
+    gap:16px;
+    margin:15px;
+}
+
+.item {
+    width:150px;
+    background:#fff;
+    border-radius:12px;
+    box-shadow:0 4px 10px rgba(0,0,0,.1);
+    cursor:pointer;
+}
+
+.item img {
+    width:100%;
+    height:130px;
+    object-fit:cover;
+}
+
+.item .info {
+    padding:10px;
+    text-align:center;
+    font-weight:bold;
+}
+
+/* Popup */
+.details-popup {
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.6);
+    justify-content:center;
+    align-items:center;
+}
+
+.details-content {
+    background:#fff;
+    padding:20px;
+    width:90%;
+    max-width:400px;
+    border-radius:12px;
+}
+
+.unit-item {
+    background:#fff;
+    border-radius:10px;
+    padding:10px;
+    margin:8px 0;
+    box-shadow:0 3px 8px rgba(0,0,0,.15);
+    cursor:pointer;
+    text-align:center;
+}
+
+.unit-item:hover { background:#f9f9f9; }
+
+/* Cart */
+#cartBox {
+    position:fixed;
+    bottom:60px;
+    right:10px;
+    width:280px;
+    background:#fff;
+    border-radius:12px;
+    box-shadow:0 4px 12px rgba(0,0,0,.25);
+    padding:12px;
+    z-index:999;
+}
+
+#cartBox h4 { margin:5px 0; }
+
+.cart-row {
+    border-bottom:1px solid #eee;
+    padding:6px 0;
+}
+
+.cart-row button {
+    margin:0 4px;
+}
+
+footer {
+    position:fixed;
+    bottom:0;
+    width:100%;
+    background:#222;
+    color:#fff;
+    text-align:center;
+    padding:10px;
+}
 </style>
 </head>
+
 <body>
 
-<header onclick="exportData()" style="cursor:pointer">مطعم واحة دمشق</header>
+<header onclick="syncFromApi()">مطعم واحة دمشق</header>
 
-<div class="categories-bar" id="menu"></div>
+<div id="menu" class="categories-bar"></div>
 <div id="itemsContainer" class="items"></div>
 
-<div class="details-popup" id="detailsPopup">
+<!-- Popup -->
+<div id="detailsPopup" class="details-popup">
     <div class="details-content">
         <div id="detailsContent"></div>
-        <button id="okBtn" onclick="closePopup()">موافق</button>
+        <button onclick="closePopup()" style="
+        width:100%;margin-top:15px;
+        background:#d62828;color:#fff;
+        padding:12px;border:none;
+        border-radius:10px;font-size:18px">
+        موافق
+        </button>
     </div>
 </div>
 
-<footer class="footer">© 2025 MicrosysEgypt.com</footer>
+<!-- Cart -->
+<div id="cartBox">
+<h4>🛒 الطلب</h4>
+<div id="cartItems"></div>
+<strong id="cartTotal"></strong>
+
+<button onclick="sendOrder()" style="
+width:100%;margin-top:8px;
+background:#25D366;color:#fff;
+padding:10px;border:none;
+border-radius:8px">
+إرسال الطلب واتساب
+</button>
+
+<button onclick="clearCart()" style="
+width:100%;margin-top:6px;
+background:#d62828;color:#fff;
+padding:8px;border:none;
+border-radius:8px">
+مسح الطلب
+</button>
+</div>
+
+<footer>© 2025 MicrosysEgypt</footer>
 
 <script>
-const API = "http://192.168.1.2:5000/api";
-const JSON_FILE = "menu-data.json"; // JSON جاهز على GitHub أو محلي
-const STORE_KEY = "OFFLINE_MENU";
+/* ================= DATA STORAGE ================= */
+let cart = JSON.parse(localStorage.getItem("cart")) || [];
+let data = JSON.parse(localStorage.getItem("menuData"));
 
-let CACHE;
+/* ================= API URLS ================= */
+const API = {
+    categories: "http://192.168.1.2:5000/api/Categories?formid=7",
+    items: id => `http://192.168.1.2:5000/api/Items/ByCategory/${id}`,
+    units: id => `http://192.168.1.2:5000/api/Items/${id}/Units`
+};
 
-// بدء التحميل
-document.addEventListener("DOMContentLoaded", async () => {
-    const ok = await loadOnline();
-    if(!ok) loadOffline();
-});
-
-async function fetchJSON(url) {
-    const c = new AbortController();
-    setTimeout(() => c.abort(), 5000);
-    const res = await fetch(url, {signal: c.signal});
-    if(!res.ok) throw "API Error";
-    return res.json();
-}
-
-// ================= ONLINE =================
-async function loadOnline() {
-    try {
-        const categories = await fetchJSON(`${API}/Categories?formid=7`);
-        const items = {};
-        const units = {};
-        for(const c of categories){
-            items[c.id] = await fetchJSON(`${API}/Items/ByCategory/${c.id}`);
-            for(const i of items[c.id]){
-                units[i.id] = await fetchJSON(`${API}/Items/${i.id}/Units`);
-            }
-        }
-        CACHE = {categories, items, units};
-        localStorage.setItem(STORE_KEY, JSON.stringify(CACHE)); // تخزين مؤقت في المتصفح
-        renderCategories(CACHE);
-        console.log("Data loaded from API ✅");
-        return true;
-    } catch(e){
-        console.log("API unavailable, switching to JSON / Offline", e);
-        return false;
+/* ================= LOAD MENU ================= */
+async function loadCategories() {
+    if (!navigator.onLine && data) {
+        renderCategories(data.categories);
+        return;
     }
+
+    const res = await fetch(API.categories);
+    const categories = await res.json();
+    data = { categories, items:{}, units:{} };
+    localStorage.setItem("menuData", JSON.stringify(data));
+    renderCategories(categories);
 }
 
-// ================= OFFLINE =================
-async function loadOffline() {
-    try {
-        const raw = localStorage.getItem(STORE_KEY);
-        if(raw){
-            CACHE = JSON.parse(raw);
-            renderCategories(CACHE);
-            console.log("Data loaded from localStorage ✅");
-        } else {
-            // إذا لم يوجد localStorage اقرأ من JSON جاهز
-            const data = await fetchJSON(JSON_FILE);
-            CACHE = data;
-            renderCategories(CACHE);
-            console.log("Data loaded from JSON file ✅");
-        }
-    } catch(e){
-        document.body.innerHTML = "<h2 style='text-align:center'>لا توجد بيانات</h2>";
-        console.error(e);
-    }
-}
-
-// ================= RENDER =================
-function renderCategories(data) {
-    const menu = document.getElementById("menu");
-    menu.innerHTML = "";
-    data.categories.forEach(c=>{
-        const d = document.createElement("div");
+function renderCategories(categories) {
+    menu.innerHTML="";
+    categories.forEach(c=>{
+        const d=document.createElement("div");
         d.className="category";
         d.textContent=c.nameA;
-        d.onclick = ()=> renderItems(c.id);
+        d.onclick=()=>loadItems(c.id);
         menu.appendChild(d);
     });
 }
 
-function renderItems(catId){
-    const box = document.getElementById("itemsContainer");
-    box.innerHTML="";
-    (CACHE.items[catId]||[]).forEach(i=>{
-        const img = i.itemImg?.length>50 ? `data:image/jpeg;base64,${i.itemImg}` : "noimage.png";
-        const d = document.createElement("div");
-        d.className="item";
-        d.innerHTML=`<img src="${img}"><div class="info">${i.nameA}</div>`;
-        d.onclick = ()=>showUnits(i.id,i.nameA);
-        box.appendChild(d);
-    });
-}
-
-function showUnits(itemId,name){
-    let html=`<h3>${name}</h3>`;
-    (CACHE.units[itemId]||[]).forEach(u=>{
-        const img = u.image?.length>50 ? `<img src="data:image/jpeg;base64,${u.image}">` : "";
-        html+=`<div class="unit-item">${img}<div>${u.unitName} - ${u.price} جنيه</div></div>`;
-    });
-    document.getElementById("detailsContent").innerHTML=html;
-    document.getElementById("detailsPopup").style.display="flex";
-}
-
-async function exportData() {
-    try {
-        const categories = await fetch(`${API}/Categories?formid=7`).then(r=>r.json());
-        const items = {};
-        const units = {};
-        for(const c of categories){
-            items[c.id] = await fetch(`${API}/Items/ByCategory/${c.id}`).then(r=>r.json());
-            for(const i of items[c.id]){
-                units[i.id] = await fetch(`${API}/Items/${i.id}/Units`).then(r=>r.json());
-            }
-        }
-        const data = {categories, items, units};
-        // حفظ مؤقت في localStorage
-        localStorage.setItem("OFFLINE_MENU", JSON.stringify(data));
-        
-        // إنشاء ملف JSON قابل للتحميل
-        const blob = new Blob([JSON.stringify(data,null,2)], {type:"application/json"});
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "menu-data.json";
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-
-        alert("تم إنشاء ملف JSON بنجاح ✅");
-    } catch(e){
-        alert("لا يوجد اتصال بالسيرفر ❌");
-        console.error(e);
+async function loadItems(catId) {
+    if (data.items[catId]) {
+        renderItems(data.items[catId]);
+        return;
     }
+    const res=await fetch(API.items(catId));
+    const items=await res.json();
+    data.items[catId]=items;
+    localStorage.setItem("menuData",JSON.stringify(data));
+    renderItems(items);
 }
-// ================= ACTIONS =================
-function closePopup(){ document.getElementById("detailsPopup").style.display="none"; }
-function manualRefresh(){ loadOnline().then(ok=>{ if(!ok) alert("لا يوجد اتصال بالسيرفر"); }); }
+
+function renderItems(items) {
+    itemsContainer.innerHTML="";
+    items.forEach(i=>{
+        const d=document.createElement("div");
+        d.className="item";
+        d.innerHTML=`
+        <img src="${i.itemImg?`data:image/jpeg;base64,${i.itemImg}`:'noimage.png'}">
+        <div class="info">${i.nameA}</div>`;
+        d.onclick=()=>loadUnits(i.id,i.nameA);
+        itemsContainer.appendChild(d);
+    });
+}
+
+async function loadUnits(id,name) {
+    detailsPopup.style.display="flex";
+    if (data.units[id]) {
+        renderUnits(name,data.units[id]);
+        return;
+    }
+    const res=await fetch(API.units(id));
+    const units=await res.json();
+    data.units[id]=units;
+    localStorage.setItem("menuData",JSON.stringify(data));
+    renderUnits(name,units);
+}
+
+function renderUnits(name,units){
+    detailsContent.innerHTML=`<h3>${name}</h3>`;
+    units.forEach(u=>{
+        detailsContent.innerHTML+=`
+        <div class="unit-item"
+        onclick="addToCart('${name}','${u.unitName}',${u.price})">
+        ${u.unitName} - ${u.price} جنيه
+        </div>`;
+    });
+}
+
+function closePopup(){ detailsPopup.style.display="none"; }
+
+/* ================= CART ================= */
+function addToCart(item,unit,price){
+    const f=cart.find(x=>x.item===item&&x.unit===unit);
+    f?f.qty++:cart.push({item,unit,price,qty:1});
+    saveCart();
+}
+
+function increase(i){cart[i].qty++;saveCart();}
+function decrease(i){cart[i].qty--; if(cart[i].qty<=0)cart.splice(i,1); saveCart();}
+function removeItem(i){cart.splice(i,1);saveCart();}
+function clearCart(){cart=[];saveCart();}
+
+function saveCart(){
+    localStorage.setItem("cart",JSON.stringify(cart));
+    renderCart();
+}
+
+function renderCart(){
+    cartItems.innerHTML="";
+    let total=0;
+    cart.forEach((c,i)=>{
+        total+=c.price*c.qty;   
+        cartItems.innerHTML+=`
+        <div class="cart-row">
+        ${c.item}<br>${c.unitName}
+        <div>
+        <button onclick="decrease(${i})">−</button>
+        ${c.qty}
+        <button onclick="increase(${i})">+</button>
+        <button onclick="removeItem(${i})">✖</button>
+        </div></div>`;
+    });
+    cartTotal.textContent="الإجمالي: "+total+" جنيه";
+}
+
+/* ================= WHATSAPP ================= */
+function sendOrder(){
+    if(!cart.length)return alert("السلة فارغة");
+    let msg="مطعم واحة دمشق\n";
+    cart.forEach((c,i)=>{
+        msg+=`${i+1}- ${c.item} (${c.unit}) × ${c.qty}\n`;
+    });
+    msg+=cartTotal.textContent;
+    window.open("https://wa.me/+201001741790?text="+encodeURIComponent(msg));
+}
+
+/* ================= SYNC ================= */
+function syncFromApi(){
+    if(!navigator.onLine)return alert("لا يوجد اتصال");
+    localStorage.removeItem("menuData");
+    loadCategories();
+}
+
+/* INIT */
+loadCategories();
+renderCart();
 </script>
+
 </body>
 </html>
